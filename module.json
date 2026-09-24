@@ -1,0 +1,10 @@
+{
+  "id": "barres-macros-libres",
+  "title": "Barres de Macros Libres",
+  "description": "Barres de macros flottantes : déplaçables n'importe où à l'écran, de 1 à 5 barres affichées en même temps, disposition horizontale ou verticale.",
+  "version": "1.2.0",
+  "authors": [{ "name": "magisterphamtom" }],
+  "compatibility": { "minimum": "13", "verified": "14.368" },
+  "esmodules": ["scripts/main.js"],
+  "styles": ["styles/style.css"]
+}
