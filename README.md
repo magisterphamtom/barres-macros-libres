@@ -11,7 +11,7 @@ Module pour **Foundry VTT v13 et v14** qui remplace la barre de macros (hotbar) 
 - **Raccourcis au pavé numérique** : barre 1 = 1 à 0, barre 2 = Ctrl + 1 à 0, barre 3 = Alt + 1 à 0. Toutes les touches sont modifiables dans *Configurer les contrôles*.
 - Glisser-déposer depuis le répertoire des macros, les compendiums ou les fiches (objets, sorts selon le système).
 - Clic droit sur une case : exécuter, modifier, retirer ou créer une macro.
-- **Alt + M** pour afficher ou masquer les barres.
+- **Alt + M** (QWERTY et AZERTY) ou le bouton de réduction pour replier les barres en une petite pastille, cliquable pour les rouvrir.
 
 Les emplacements sont ceux de la hotbar native de Foundry : aucune macro n'est perdue si le module est désactivé.
 

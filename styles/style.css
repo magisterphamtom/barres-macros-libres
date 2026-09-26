@@ -104,6 +104,10 @@
   pointer-events: none;
 }
 
+/* Barre réduite */
+#bml-root.collapsed { padding: 3px 5px; }
+#bml-root.collapsed .bml-grip { flex: none; }
+
 /* Menu contextuel */
 .bml-menu {
   position: fixed;

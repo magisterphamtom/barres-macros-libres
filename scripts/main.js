@@ -50,8 +50,13 @@ class BarresMacros {
     this._applyPosition();
   }
 
-  toggle() {
-    return setSetting("visible", !getSetting("visible"));
+  /** Alt+M : réduit / déploie la barre (et la réactive si elle était désactivée). */
+  async toggle() {
+    if (!getSetting("visible")) {
+      await setSetting("collapsed", false);
+      return setSetting("visible", true);
+    }
+    return setSetting("collapsed", !getSetting("collapsed"));
   }
 
   _create() {
@@ -72,10 +77,31 @@ class BarresMacros {
     const rows = clamp(getSetting("rows"), 1, MAX_ROWS);
     const vertical = getSetting("orientation") === "vertical";
     const locked = getSetting("locked");
+    const collapsed = getSetting("collapsed");
 
-    this.el.className = `bml ${vertical ? "vertical" : "horizontal"}${locked ? " locked" : ""}`;
+    this.el.className = `bml ${vertical ? "vertical" : "horizontal"}${locked ? " locked" : ""}${collapsed ? " collapsed" : ""}`;
     this.el.style.setProperty("--bml-size", `${getSetting("slotSize")}px`);
-    this.el.replaceChildren(this._buildHandle(rows, vertical, locked), this._buildRows(rows));
+    if (collapsed) this.el.replaceChildren(this._buildCollapsed(locked));
+    else this.el.replaceChildren(this._buildHandle(rows, vertical, locked), this._buildRows(rows));
+  }
+
+  /** Barre réduite : une petite pastille déplaçable qui redéploie les barres au clic. */
+  _buildCollapsed(locked) {
+    const handle = document.createElement("header");
+    handle.className = "bml-handle";
+    const grip = document.createElement("i");
+    grip.className = "bml-grip fa-solid fa-grip-vertical";
+    grip.dataset.tooltip = locked ? "Position verrouillée" : "Glisser pour déplacer";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.action = "expand";
+    b.dataset.tooltip = "Afficher les barres de macros (Alt+M)";
+    b.setAttribute("aria-label", b.dataset.tooltip);
+    const i = document.createElement("i");
+    i.className = "fa-solid fa-table-cells";
+    b.append(i, " Macros");
+    handle.append(grip, b);
+    return handle;
   }
 
   _buildHandle(rows, vertical, locked) {
@@ -106,7 +132,7 @@ class BarresMacros {
         vertical ? "Passer en horizontal" : "Passer en vertical"),
       makeBtn("lock", locked ? "fa-solid fa-lock" : "fa-solid fa-lock-open",
         locked ? "Déverrouiller la position" : "Verrouiller la position"),
-      makeBtn("hide", "fa-solid fa-eye-slash", "Masquer (Alt+M pour réafficher)")
+      makeBtn("hide", "fa-solid fa-minimize", "Réduire (Alt+M)")
     );
     return handle;
   }
@@ -234,7 +260,9 @@ class BarresMacros {
       case "lock":
         return setSetting("locked", !getSetting("locked"));
       case "hide":
-        return setSetting("visible", false);
+        return setSetting("collapsed", true);
+      case "expand":
+        return setSetting("collapsed", false);
     }
   }
 
@@ -407,6 +435,7 @@ Hooks.once("init", () => {
     config: true, type: Boolean, default: true
   });
   client("locked", { config: false, type: Boolean, default: false });
+  client("collapsed", { config: false, type: Boolean, default: false });
   game.settings.register(MOD, "position", { scope: "client", config: false, type: Object, default: {} });
 
   // Touches du pavé numérique : barre 1 = 1..0, barre 2 = Ctrl + 1..0, barre 3 = Alt + 1..0.
@@ -430,8 +459,12 @@ Hooks.once("init", () => {
   }
 
   game.keybindings.register(MOD, "toggle", {
-    name: "Afficher / masquer les barres de macros",
-    editable: [{ key: "KeyM", modifiers: ["Alt"] }],
+    name: "Réduire / afficher les barres de macros",
+    hint: "Alt+M en QWERTY comme en AZERTY (la touche M n'est pas au même endroit sur les deux claviers).",
+    editable: [
+      { key: "KeyM", modifiers: ["Alt"] },       // M en QWERTY
+      { key: "Semicolon", modifiers: ["Alt"] }   // M en AZERTY
+    ],
     onDown: () => { bars?.toggle(); return true; }
   });
 });
