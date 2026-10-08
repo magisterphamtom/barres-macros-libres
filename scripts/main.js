@@ -334,6 +334,38 @@ class BarresMacros {
     event.target.closest(".bml-slot")?.classList.remove("drag-over");
   }
 
+  /** Glisser un acteur, journal, objet, scène... : crée une macro qui ouvre sa fiche. */
+  async _dropDocument(data, slot) {
+    try {
+      let doc = null;
+      try { doc = data.uuid ? await fromUuid(data.uuid) : null; } catch (e) { /* ignore */ }
+      if (!doc) {
+        const cls = CONFIG[data.type]?.documentClass;
+        if (cls?.fromDropData) doc = await cls.fromDropData(data);
+      }
+      if (!doc || doc.documentName === "Macro") return;
+      if (doc.pack) {
+        ui.notifications.warn("Importe d'abord ce document dans le monde pour le placer dans la barre.");
+        return;
+      }
+      const uuid = doc.uuid;
+      const command = `const doc = await fromUuid(${JSON.stringify(uuid)});\n` +
+        `if (!doc) return ui.notifications.warn("Document introuvable.");\n` +
+        `if (doc.sheet.rendered) doc.sheet.close(); else doc.sheet.render(true);`;
+      let macro = game.macros.find(m => m.command === command && m.isOwner);
+      if (!macro) {
+        macro = await Macro.implementation.create({
+          name: doc.name, type: "script", img: doc.img ?? doc.thumb ?? "icons/svg/dice-target.svg",
+          command, flags: { "barres-macros-libres": { uuid } }
+        });
+      }
+      if (macro) await game.user.assignHotbarMacro(macro, slot);
+    } catch (err) {
+      console.error(`${MOD} |`, err);
+      ui.notifications.warn("Impossible de créer la macro : ton rôle n'a probablement pas le droit de créer des macros (réglage des permissions du MJ).");
+    }
+  }
+
   async _onDrop(event) {
     const slotEl = event.target.closest(".bml-slot");
     if (!slotEl) return;
@@ -348,7 +380,10 @@ class BarresMacros {
     // Même comportement que la hotbar native : les systèmes (dnd5e, etc.)
     // peuvent créer une macro à partir d'un objet, d'un sort, d'un acteur...
     if (Hooks.call("hotbarDrop", ui.hotbar, data, slot) === false) return;
-    if (data.type !== "Macro") return;
+    if (data.type !== "Macro") {
+      await this._dropDocument(data, slot);
+      return;
+    }
 
     let macro = await Macro.implementation.fromDropData(data);
     if (!macro) return;
