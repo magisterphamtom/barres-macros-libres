@@ -286,9 +286,23 @@ class BarresMacros {
             action: () => game.user.assignHotbarMacro(null, slot) }
         ]
       : [
-          { label: "Créer une macro ici", icon: "fa-solid fa-plus", action: () => this._createMacro(slot) }
+          { label: "Créer une macro ici", icon: "fa-solid fa-plus", action: () => this._createMacro(slot) },
+          { label: "Placer une fiche de personnage…", icon: "fa-solid fa-user",
+            action: () => this._pickActor(event.clientX, event.clientY, slot) }
         ];
     this._showMenu(event.clientX, event.clientY, items);
+  }
+
+  /** Alternative au glisser-déposer : choisir une fiche dans une liste. */
+  _pickActor(x, y, slot) {
+    const actors = game.actors.filter(a => a.isOwner)
+      .sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
+    if (!actors.length) return ui.notifications.info("Aucune fiche dont tu es propriétaire.");
+    const items = actors.map(a => ({
+      label: a.name, icon: "fa-solid fa-user",
+      action: () => this._dropDocument({ type: "Actor", uuid: a.uuid }, slot)
+    }));
+    setTimeout(() => this._showMenu(x, y, items), 0);
   }
 
   async _createMacro(slot) {
